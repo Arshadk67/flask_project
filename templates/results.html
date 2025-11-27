@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Option Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: #e5e7eb;
+            margin: 0;
+            padding: 0;
+        }
+
+        .wrapper {
+            max-width: 900px;
+            margin: 40px auto;
+            background: #020617;
+            padding: 24px 28px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            border: 1px solid #1f2937;
+        }
+
+        h1 {
+            margin-top: 0;
+            text-align: center;
+            font-size: 26px;
+        }
+
+        h2 {
+            margin-top: 24px;
+            font-size: 18px;
+            border-bottom: 1px solid #1f2937;
+            padding-bottom: 6px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 18px;
+            margin-top: 12px;
+        }
+
+        .label {
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .value {
+            font-size: 15px;
+        }
+
+        .card {
+            margin-top: 18px;
+            padding: 14px 16px;
+            border-radius: 10px;
+            background: #020617;
+            border: 1px solid #1f2937;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: #111827;
+            color: #e5e7eb;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .back-link:hover {
+            background: #1f2937;
+        }
+
+        /* ---- Dial styles ---- */
+
+        .wheel-container {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .wheel {
+            flex: 1;
+            min-width: 220px;
+            padding: 12px;
+            border-radius: 12px;
+            background: #020617;
+            border: 1px solid #1f2937;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.7);
+            position: relative;
+        }
+
+        .wheel label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 6px;
+            color: #9ca3af;
+        }
+
+        .dial {
+            position: relative;
+            height: 150px;              /* visible window height */
+            overflow-y: auto;
+            margin: 4px 0;
+            scrollbar-width: none;      /* Firefox */
+        }
+
+        .dial::-webkit-scrollbar {
+            display: none;              /* Chrome/Safari */
+        }
+
+        .dial-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .dial-item {
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #9ca3af;
+            scroll-snap-align: center;
+        }
+
+        .dial-spacer {
+            height: 57px; /* so center item lines up with highlight band */
+        }
+
+        .dial-highlight {
+            position: absolute;
+            top: 50%;
+            left: 8px;
+            right: 8px;
+            height: 36px;
+            transform: translateY(-50%);
+            border-top: 1px solid #4b5563;
+            border-bottom: 1px solid #4b5563;
+            pointer-events: none;
+            background: radial-gradient(circle at center,
+                        rgba(15,23,42,0.2),
+                        rgba(15,23,42,0.9));
+        }
+
+        .dial-item.active {
+            color: #e5e7eb;
+            font-weight: 600;
+        }
+
+        .wheel-output {
+            margin-top: 14px;
+            font-size: 16px;
+        }
+
+        .wheel-output span.amount {
+            font-weight: 600;
+        }
+
+        .profit {
+            color: #22c55e;
+        }
+
+        .loss {
+            color: #f97373;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 6px;
+            border-bottom: 1px solid #020617;
+        }
+
+        th {
+            border-bottom: 1px solid #1f2937;
+        }
+
+        @media (max-width: 600px) {
+            .wrapper {
+                margin: 16px;
+                padding: 18px 16px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <h1>Your Option Setup</h1>
+
+    <h2>Inputs</h2>
+    <div class="grid">
+        <div class="label">Current Stock Price</div>
+        <div class="value">${{ "%.2f"|format(stock_price) }}</div>
+
+        <div class="label">Strike Price</div>
+        <div class="value">${{ "%.2f"|format(strike_price) }}</div>
+
+        <div class="label">Price per Option Contract (Premium)</div>
+        <div class="value">${{ "%.2f"|format(premium) }}</div>
+
+        <div class="label">Number of Contracts</div>
+        <div class="value">{{ contracts }}</div>
+
+        <div class="label">Option Type</div>
+        <div class="value">{{ option_type|capitalize }}</div>
+
+        <div class="label">Expiry Date</div>
+        <div class="value">{{ expiry_date }}</div>
+
+        <div class="label">Implied Volatility</div>
+        <div class="value">{{ "%.1f"|format(implied_volatility) }}%</div>
+
+        <div class="label">Stock Price Min</div>
+        <div class="value">${{ "%.2f"|format(stock_min) }}</div>
+
+        <div class="label">Stock Price Max</div>
+        <div class="value">${{ "%.2f"|format(stock_max) }}</div>
+    </div>
+
+    <h2>Quick Summary</h2>
+    <div class="card">
+        <p>
+            <strong>Notional position size</strong>
+            (assuming 100 shares per contract):
+        </p>
+        <p>
+            Total cost =
+            ${{ "%.2f"|format(premium * 100 * contracts) }}
+        </p>
+
+        {% if option_type == "call" %}
+            <p><strong>Breakeven at expiry (approx)</strong> =
+                Strike + Premium
+                = ${{ "%.2f"|format(strike_price + premium) }}
+            </p>
+        {% elif option_type == "put" %}
+            <p><strong>Breakeven at expiry (approx)</strong> =
+                Strike - Premium
+                = ${{ "%.2f"|format(strike_price - premium) }}
+            </p>
+        {% endif %}
+    </div>
+
+    <!-- 🎯 Interactive wheels as dials -->
+    <h2>Interactive Profit Picker</h2>
+    <div class="card">
+        <p>Select a <strong>date</strong> and <strong>stock price</strong> to see estimated P/L (using implied volatility).</p>
+
+        <!-- hidden fields that JS updates, so we can reuse updateWheel() logic -->
+        <input type="hidden" id="wheel-date">
+        <input type="hidden" id="wheel-price">
+
+        <div class="wheel-container">
+            <!-- Date Dial -->
+            <div class="wheel">
+                <label>Date (from today to expiry)</label>
+                <div class="dial dial-date" id="dial-date">
+                    <div class="dial-highlight"></div>
+                    <ul class="dial-list">
+                        <li class="dial-spacer"></li>
+                        {% for d in date_labels %}
+                            <li class="dial-item" data-value="{{ d }}">{{ d }}</li>
+                        {% endfor %}
+                        <li class="dial-spacer"></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Price Dial -->
+            <div class="wheel">
+                <label>Stock Price</label>
+                <div class="dial dial-price" id="dial-price">
+                    <div class="dial-highlight"></div>
+                    <ul class="dial-list">
+                        <li class="dial-spacer"></li>
+                        {% for p in price_points %}
+                            <li class="dial-item" data-value="{{ "%.2f"|format(p) }}">
+                                ${{ "%.2f"|format(p) }}
+                            </li>
+                        {% endfor %}
+                        <li class="dial-spacer"></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="wheel-output" id="wheel-output">
+            Pick a date and price to see profit or loss.
+        </div>
+    </div>
+
+    <h2>Profit at Expiry by Stock Price</h2>
+    <div class="card">
+        <p>This assumes 100 shares per contract and looks only at expiry (no time value).</p>
+        <table>
+            <thead>
+            <tr>
+                <th>Stock Price at Expiry</th>
+                <th>P/L per Contract</th>
+                <th>Total P/L (All Contracts)</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in rows %}
+                {% set positive = row.pl_total >= 0 %}
+                <tr>
+                    <td>
+                        ${{ "%.2f"|format(row.price) }}
+                    </td>
+                    <td style="color: {{ 'limegreen' if positive else '#f97373' }};">
+                        {{ '+' if row.pl_per_contract > 0 else '' }}${{ "%.2f"|format(row.pl_per_contract) }}
+                    </td>
+                    <td style="color: {{ 'limegreen' if positive else '#f97373' }};">
+                        {{ '+' if row.pl_total > 0 else '' }}${{ "%.2f"|format(row.pl_total) }}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <p class="card">
+        The dial above uses a simple theoretical model (Black–Scholes with your implied volatility)
+        to estimate option value before expiry. It’s an approximation, not a guarantee.
+    </p>
+
+    <a href="/" class="back-link">⬅ Back and edit inputs</a>
+</div>
+
+<script>
+    // P/L grid from Flask
+    const grid = {{ grid_json|safe }};
+
+    const dateHidden = document.getElementById('wheel-date');
+    const priceHidden = document.getElementById('wheel-price');
+    const outputDiv = document.getElementById('wheel-output');
+
+    function updateWheel() {
+        const d = dateHidden.value;
+        const p = priceHidden.value;
+
+        if (!d || !p || !grid[d] || grid[d][p] === undefined) {
+            outputDiv.textContent = 'No data for that combination.';
+            return;
+        }
+
+        const totalPL = grid[d][p];
+        const formatted = totalPL.toFixed(2);
+        const isProfit = totalPL >= 0;
+
+        outputDiv.innerHTML = `
+            On <strong>${d}</strong> at stock price
+            <strong>$${p}</strong>,
+            estimated P/L is
+            <span class="amount ${isProfit ? 'profit' : 'loss'}">
+                ${isProfit ? '+' : ''}$${formatted}
+            </span>.
+        `;
+    }
+
+    // ---- Dial logic ----
+
+    function initDial(dialElement, hiddenInput, initialIndex = 0) {
+        const items = Array.from(dialElement.querySelectorAll('.dial-item'));
+        if (items.length === 0) return;
+
+        const itemHeight = items[0].offsetHeight;
+        let scrollTimeout = null;
+
+        function setActive(index) {
+            items.forEach((el, i) => {
+                el.classList.toggle('active', i === index);
+            });
+            const value = items[index].dataset.value;
+            hiddenInput.value = value;
+            updateWheel();
+        }
+
+        function snapToNearest() {
+            const scrollTop = dialElement.scrollTop;
+            // remove top spacer height
+            const offset = scrollTop - 57; // must match .dial-spacer height
+            let idx = Math.round(offset / itemHeight);
+            if (idx < 0) idx = 0;
+            if (idx >= items.length) idx = items.length - 1;
+
+            const targetScroll = 57 + idx * itemHeight;
+            dialElement.scrollTo({top: targetScroll, behavior: 'smooth'});
+            setActive(idx);
+        }
+
+        function onScroll() {
+            if (scrollTimeout !== null) {
+                clearTimeout(scrollTimeout);
+            }
+            scrollTimeout = setTimeout(snapToNearest, 80);
+        }
+
+        dialElement.addEventListener('scroll', onScroll);
+
+        // init at desired index
+        const startScroll = 57 + initialIndex * itemHeight;
+        dialElement.scrollTop = startScroll;
+        setActive(initialIndex);
+    }
+
+    // Initialize dials
+    const dateDial = document.getElementById('dial-date');
+    const priceDial = document.getElementById('dial-price');
+
+    // start both at first item (index 0)
+    initDial(dateDial, dateHidden, 0);
+    initDial(priceDial, priceHidden, 0);
+
+    // 💾 Save this option setup into localStorage as one of the recent 5
+    (function saveToRecent() {
+        const entry = {
+            stock: {{ stock_price }},
+            strike: {{ strike_price }},
+            premium: {{ premium }},
+            contracts: {{ contracts }},
+            type: "{{ option_type }}",
+            expiry: "{{ expiry_date }}",
+            volatility: {{ implied_volatility }},
+            min: {{ stock_min }},
+            max: {{ stock_max }}
+        };
+
+        let recent = [];
+        try {
+            recent = JSON.parse(localStorage.getItem('recentOptions')) || [];
+        } catch (e) {
+            recent = [];
+        }
+
+        recent = recent.filter(function (opt) {
+            return !(
+                opt.type === entry.type &&
+                opt.strike === entry.strike &&
+                opt.expiry === entry.expiry &&
+                opt.premium === entry.premium &&
+                opt.contracts === entry.contracts
+            );
+        });
+
+        recent.unshift(entry);
+        if (recent.length > 5) {
+            recent = recent.slice(0, 5);
+        }
+
+        localStorage.setItem('recentOptions', JSON.stringify(recent));
+    })();
+</script>
+</body>
+</html>
